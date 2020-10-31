@@ -1,4 +1,6 @@
 import socket
+import base64
+import dill
 import json
 from code import compile_command
 
@@ -7,6 +9,15 @@ PORT = 1337
 
 _globals = {}
 _locals = {}
+
+def serialise_locals():
+    return json.dumps(
+        dict(
+            map(
+                lambda kv: (
+                    kv[0],
+                    base64.b64encode(dill.dumps(kv[1])).decode(ENCODING)),
+                _locals.items())))
 
 def evlauate(expr):
     try:
@@ -29,7 +40,7 @@ def process_request(sock):
                 break
             expr = data.decode(ENCODING)
             result = evlauate(expr)
-            conn.sendall(json.dumps(_locals).encode(ENCODING))
+            conn.sendall(serialise_locals().encode(ENCODING))
 
 
 if __name__ == '__main__':

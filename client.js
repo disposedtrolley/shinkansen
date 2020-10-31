@@ -6,7 +6,11 @@ const readline = require('readline').createInterface({
 
 const client = net.createConnection({ port: 1337 }, () => {
     console.log('connected!')
-    promptExpr(client)
+    // promptExpr(client)
+    client.write(`
+def add(num):
+    return num + 1
+`)
 })
 
 client.on('data', data => {
@@ -20,6 +24,7 @@ client.on('end', () => {
 
 const promptExpr = (client) => {
     readline.question('\n>>> ', expr => {
+        console.log(expr)
         client.write(expr)
     })
 }
