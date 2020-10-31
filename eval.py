@@ -12,7 +12,7 @@ class SocketInterpreter(InteractiveInterpreter):
     def __init__(self, encoding):
         InteractiveInterpreter.__init__(self, {})
         self.encoding = encoding
-        self.last_code = None
+        self.last_expr_result = None
 
     def write(self, data):
         print("overloaded")
@@ -23,11 +23,21 @@ class SocketInterpreter(InteractiveInterpreter):
         """
         try:
             exec(code, self.locals)
-            self.last_code = code
+            self.last_expr_result = self.result_from_code(code)
         except SystemExit:
             raise
         except:
             self.showtraceback()
+    
+    def result_from_code(self, code):
+        if len(code.co_names) == 0:
+            return None
+
+        key = code.co_names[-1]
+        if key not in self.locals:
+            raise
+        
+        return self.locals[key]
 
     def evaluate(self, source):
         ret = self.runsource(source)
@@ -49,15 +59,10 @@ class SocketInterpreter(InteractiveInterpreter):
     def serialised_locals(self):
         return json.dumps(self.serialisable_locals())
 
-    def get_last_expr_result(self):
-        l = self.serialisable_locals()
-        n = self.last_code.co_names[-1]
-        return l[n] if n in l else None
-
     def response(self):
         return json.dumps({
             "locals": self.serialised_locals(),
-            "last_expr_result": self.get_last_expr_result()
+            "last_expr_result": self.last_expr_result
         }).encode(self.encoding)
 
 class ConnectionHandler(Thread):
