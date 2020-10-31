@@ -4,13 +4,21 @@ const readline = require('readline').createInterface({
   output: process.stdout
 })
 
+let promptNormal = ">>>"
+let promptIncomplete = "..."
+let buf = ""
+let incomplete = false
+let promptCurrent = promptNormal
+
 const client = net.createConnection({ port: 1337 }, () => {
     console.log('connected!')
     promptExpr(client)
 })
 
 client.on('data', data => {
-    console.log(data.toString())
+    j = JSON.parse(data.toString())
+    incomplete = j.incomplete
+    console.log(j)
     promptExpr(client)
 })
 
@@ -19,8 +27,16 @@ client.on('end', () => {
 })
 
 const promptExpr = (client) => {
-    readline.question('\n>>> ', expr => {
-        console.log(expr)
-        client.write(expr)
+    promptCurrent = incomplete ? promptIncomplete : promptNormal
+
+    readline.question(`\n${promptCurrent} `, expr => {
+        if (incomplete) {
+            buf = `${buf}\n${expr}`
+        } else {
+            buf = expr
+        }
+
+        console.log(buf)
+        client.write(buf)
     })
 }

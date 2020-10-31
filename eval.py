@@ -13,6 +13,7 @@ class SocketInterpreter(InteractiveInterpreter):
         InteractiveInterpreter.__init__(self, {})
         self._last_expr_result = None
         self._last_expr_error = None
+        self._incomplete = False
 
     def write(self, data):
         """Override
@@ -38,6 +39,7 @@ class SocketInterpreter(InteractiveInterpreter):
     def _reset_expr_state(self):
         self._last_expr_result = None
         self._last_expr_error = None
+        self._incomplete = False
 
     def _trimmed_locals(self):
         return {k: v for k, v in self.locals.items() if k not in ["__builtins__"]}
@@ -58,7 +60,7 @@ class SocketInterpreter(InteractiveInterpreter):
 
         key = code.co_names[-1]
         if key not in self._serialisable_locals():
-            raise
+            return None
         
         return self._serialisable_locals()[key]
     
@@ -67,14 +69,17 @@ class SocketInterpreter(InteractiveInterpreter):
 
     def evaluate(self, source):
         self._reset_expr_state()
-
-        return self.runsource(source)
+        ret = self.runsource(source)
+        if ret is True:
+            self._incomplete = True
+        return ret
 
     def results(self):
         return json.dumps({
             "locals": self._serialisable_locals(),
             "last_expr_result": self._last_expr_result,
-            "last_expr_error": self._last_expr_error
+            "last_expr_error": self._last_expr_error,
+            "incomplete": self._incomplete
         })
 
 
