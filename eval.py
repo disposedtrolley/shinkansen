@@ -2,8 +2,6 @@ from code import InteractiveInterpreter
 from contextlib import redirect_stdout
 import io
 import json
-from threading import Thread
-import signal
 import socket
 import sys
 
@@ -11,9 +9,8 @@ ENCODING = 'utf-8'
 PORT = 1337
 
 class SocketInterpreter(InteractiveInterpreter):
-    def __init__(self, encoding):
+    def __init__(self):
         InteractiveInterpreter.__init__(self, {})
-        self._encoding = encoding
         self._last_expr_result = None
         self._last_expr_error = None
 
@@ -78,27 +75,7 @@ class SocketInterpreter(InteractiveInterpreter):
             "locals": self._serialisable_locals(),
             "last_expr_result": self._last_expr_result,
             "last_expr_error": self._last_expr_error
-        }).encode(self._encoding)
-
-
-class ConnectionHandler(Thread):
-    def __init__(self, conn, addr, encoding):
-        Thread.__init__(self)
-        self.conn = conn
-        self.addr = addr
-        self.encoding = encoding
-    
-    def run(self):
-        interp = SocketInterpreter(self.encoding)
-        print('Connected from ', self.addr)
-        while True:
-            data = self.conn.recv(1024)
-            if not data:
-                self.conn.close()
-                break
-            expr = data.decode(self.encoding)
-            interp.evaluate(expr)
-            self.conn.sendall(interp.results())
+        })
 
 
 if __name__ == '__main__':
@@ -109,8 +86,17 @@ if __name__ == '__main__':
     while True:
         try:
             (conn, addr) = serversocket.accept()
-            handler = ConnectionHandler(conn, addr, ENCODING)
-            handler.start()
+            print(addr, 'connected')
+            interp = SocketInterpreter()
+            while True:
+                data = conn.recv(1024)
+                if not data:
+                    print(addr, 'disconnected')
+                    conn.close()
+                    break
+                expr = data.decode(ENCODING)
+                interp.evaluate(expr)
+                conn.sendall(interp.results().encode(ENCODING))
         except KeyboardInterrupt:
             print('Qutting...')
             serversocket.close()
