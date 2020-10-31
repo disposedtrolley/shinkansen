@@ -1,27 +1,23 @@
 import socket
 import json
-from code import compile_command
+from code import InteractiveInterpreter
 
-ENCODING = 'utf-8'
-PORT = 1337
+class SocketInterpreter(InteractiveInterpreter):
+    def __init__(self, encoding):
+        InteractiveInterpreter.__init__(self, {})
+        self.encoding = encoding
 
-_globals = {}
-_locals = {}
+    def write(self, data):
+        print("overloaded")
+        print(data)
 
-def serialised_locals():
-    return json.dumps(_locals).encode(ENCODING)
-        
-def evlauate(expr):
-    try:
-        code_obj = compile_command(f"_LAST_EXPR_RESULT = {expr}")
-        if code_obj is None:
-            print("Incomplete expression")
-            return
-        exec(code_obj, _globals, _locals)
-    except (SyntaxError, ValueError, OverflowError) as e:
-        print(e)
+    def trimmed_locals(self):
+        return {k: v for k, v in self.locals.items() if k != "__builtins__"}
+    
+    def serialised_locals(self):
+        return json.dumps(self.trimmed_locals()).encode(self.encoding)
 
-def process_request(sock):
+def process_request(sock, interp):
     (conn, addr) = sock.accept()
     with conn:
         print('Connected from ', addr)
@@ -31,14 +27,19 @@ def process_request(sock):
                 sock.close()
                 break
             expr = data.decode(ENCODING)
-            result = evlauate(expr)
-            conn.sendall(serialised_locals())
+            interp.runsource(expr)
+            conn.sendall(interp.serialised_locals())
 
 
 if __name__ == '__main__':
+    ENCODING = 'utf-8'
+    PORT = 1337
+
+    interp = SocketInterpreter(ENCODING)
+
     serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     serversocket.bind((socket.gethostname(), PORT))
     serversocket.listen(5)
 
     while True:
-        process_request(serversocket)
+        process_request(serversocket, interp)
