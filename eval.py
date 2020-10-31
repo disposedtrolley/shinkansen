@@ -15,10 +15,14 @@ class SocketInterpreter(InteractiveInterpreter):
         InteractiveInterpreter.__init__(self, {})
         self.encoding = encoding
         self.last_expr_result = None
+        self.last_expr_error = None
+
+    def reset_expr_state(self):
+        self.last_expr_result = None
+        self.last_expr_error = None
 
     def write(self, data):
-        print("overloaded")
-        print(data)
+        self.last_expr_error = data
 
     def runcode(self, code):
         """Override
@@ -50,8 +54,9 @@ class SocketInterpreter(InteractiveInterpreter):
         return buf.getvalue().rstrip("\n")
 
     def evaluate(self, source):
-        ret = self.runsource(source)
-        return ret
+        self.reset_expr_state()
+
+        return self.runsource(source)
 
     def trimmed_locals(self):
         return {k: v for k, v in self.locals.items() if k not in ["__builtins__"]}
@@ -69,10 +74,11 @@ class SocketInterpreter(InteractiveInterpreter):
     def serialised_locals(self):
         return json.dumps(self.serialisable_locals())
 
-    def response(self):
+    def results(self):
         return json.dumps({
             "locals": self.serialised_locals(),
-            "last_expr_result": self.last_expr_result
+            "last_expr_result": self.last_expr_result,
+            "last_expr_error": self.last_expr_error
         }).encode(self.encoding)
 
 class ConnectionHandler(Thread):
@@ -91,7 +97,7 @@ class ConnectionHandler(Thread):
                 break
             expr = data.decode(ENCODING)
             interp.evaluate(expr)
-            self.conn.sendall(interp.response())
+            self.conn.sendall(interp.results())
 
 
 if __name__ == '__main__':
