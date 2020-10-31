@@ -1,4 +1,5 @@
 import socket
+import json
 from code import compile_command
 
 ENCODING = 'utf-8'
@@ -12,6 +13,7 @@ def evlauate(expr):
         obj = compile_command(expr)
         if obj is None:
             print("Incomplete expression")
+            return
         exec(obj, _globals, _locals)
     except (SyntaxError, ValueError, OverflowError) as e:
         print(e)
@@ -27,7 +29,7 @@ def process_request(sock):
                 break
             expr = data.decode(ENCODING)
             result = evlauate(expr)
-            conn.sendall(result.encode(ENCODING))
+            conn.sendall(json.dumps(_locals).encode(ENCODING))
 
 
 if __name__ == '__main__':
