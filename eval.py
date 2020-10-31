@@ -1,4 +1,6 @@
 from code import InteractiveInterpreter
+from contextlib import redirect_stdout
+import io
 import json
 from threading import Thread
 import signal
@@ -22,8 +24,13 @@ class SocketInterpreter(InteractiveInterpreter):
         """Override
         """
         try:
-            exec(code, self.locals)
-            self.last_expr_result = self.result_from_code(code)
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                exec(code, self.locals)
+            result = self.result_from_code(code)
+            if result is None:
+                result = self.result_from_stdout(buf)
+            self.last_expr_result = result
         except SystemExit:
             raise
         except:
@@ -38,6 +45,9 @@ class SocketInterpreter(InteractiveInterpreter):
             raise
         
         return self.locals[key]
+    
+    def result_from_stdout(self, buf):
+        return buf.getvalue().rstrip("\n")
 
     def evaluate(self, source):
         ret = self.runsource(source)
