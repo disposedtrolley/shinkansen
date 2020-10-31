@@ -1,6 +1,12 @@
-import socket
-import json
 from code import InteractiveInterpreter
+import json
+from threading import Thread
+import signal
+import socket
+import sys
+
+ENCODING = 'utf-8'
+PORT = 1337
 
 class SocketInterpreter(InteractiveInterpreter):
     def __init__(self, encoding):
@@ -29,8 +35,8 @@ class SocketInterpreter(InteractiveInterpreter):
 
     def trimmed_locals(self):
         return {k: v for k, v in self.locals.items() if k not in ["__builtins__"]}
-    
-    def serialised_locals(self):
+
+    def serialisable_locals(self):
         serialisable = {}
         for k, v in self.locals.items():
             try:
@@ -38,35 +44,52 @@ class SocketInterpreter(InteractiveInterpreter):
                 serialisable[k] = v
             except (TypeError, OverflowError):
                 continue
-        return json.dumps(serialisable).encode(self.encoding)
+        return serialisable
+
+    def serialised_locals(self):
+        return json.dumps(self.serialisable_locals())
 
     def get_last_expr_result(self):
-        return self.locals[self.last_code.co_names[-1]]
+        l = self.serialisable_locals()
+        n = self.last_code.co_names[-1]
+        return l[n] if n in l else None
 
-def process_request(sock, interp):
-    (conn, addr) = sock.accept()
-    with conn:
-        print('Connected from ', addr)
+    def response(self):
+        return json.dumps({
+            "locals": self.serialised_locals(),
+            "last_expr_result": self.get_last_expr_result()
+        }).encode(self.encoding)
+
+class ConnectionHandler(Thread):
+    def __init__(self, conn, addr):
+        Thread.__init__(self)
+        self.conn = conn
+        self.addr = addr
+    
+    def run(self):
+        interp = SocketInterpreter(ENCODING)
+        print('Connected from ', self.addr)
         while True:
-            data = conn.recv(1024)
+            data = self.conn.recv(1024)
             if not data:
-                sock.close()
+                self.conn.close()
                 break
             expr = data.decode(ENCODING)
             interp.evaluate(expr)
-            print(interp.get_last_expr_result())
-            conn.sendall(interp.serialised_locals())
+            self.conn.sendall(interp.response())
 
 
 if __name__ == '__main__':
-    ENCODING = 'utf-8'
-    PORT = 1337
-
-    interp = SocketInterpreter(ENCODING)
-
     serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     serversocket.bind((socket.gethostname(), PORT))
     serversocket.listen(5)
 
     while True:
-        process_request(serversocket, interp)
+        try:
+            (conn, addr) = serversocket.accept()
+            handler = ConnectionHandler(conn, addr)
+            handler.start()
+        except KeyboardInterrupt:
+            print('Qutting...')
+            serversocket.close()
+            sys.exit(0)
