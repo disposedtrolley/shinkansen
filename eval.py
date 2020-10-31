@@ -1,6 +1,4 @@
 import socket
-import base64
-import dill
 import json
 from code import compile_command
 
@@ -10,22 +8,16 @@ PORT = 1337
 _globals = {}
 _locals = {}
 
-def serialise_locals():
-    return json.dumps(
-        dict(
-            map(
-                lambda kv: (
-                    kv[0],
-                    base64.b64encode(dill.dumps(kv[1])).decode(ENCODING)),
-                _locals.items())))
-
+def serialised_locals():
+    return json.dumps(_locals).encode(ENCODING)
+        
 def evlauate(expr):
     try:
-        obj = compile_command(expr)
-        if obj is None:
+        code_obj = compile_command(f"_LAST_EXPR_RESULT = {expr}")
+        if code_obj is None:
             print("Incomplete expression")
             return
-        exec(obj, _globals, _locals)
+        exec(code_obj, _globals, _locals)
     except (SyntaxError, ValueError, OverflowError) as e:
         print(e)
 
@@ -40,7 +32,7 @@ def process_request(sock):
                 break
             expr = data.decode(ENCODING)
             result = evlauate(expr)
-            conn.sendall(serialise_locals().encode(ENCODING))
+            conn.sendall(serialised_locals())
 
 
 if __name__ == '__main__':
