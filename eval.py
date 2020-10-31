@@ -31,7 +31,14 @@ class SocketInterpreter(InteractiveInterpreter):
         return {k: v for k, v in self.locals.items() if k not in ["__builtins__"]}
     
     def serialised_locals(self):
-        return json.dumps(self.trimmed_locals()).encode(self.encoding)
+        serialisable = {}
+        for k, v in self.locals.items():
+            try:
+                json.dumps(v)
+                serialisable[k] = v
+            except (TypeError, OverflowError):
+                continue
+        return json.dumps(serialisable).encode(self.encoding)
 
     def get_last_expr_result(self):
         return self.locals[self.last_code.co_names[-1]]
