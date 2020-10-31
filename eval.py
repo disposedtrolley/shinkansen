@@ -49,9 +49,11 @@ class SocketInterpreter(InteractiveInterpreter):
         for k, v in self._trimmed_locals().items():
             try:
                 json.dumps(v)
-                serialisable[k] = v
             except (TypeError, OverflowError):
-                continue
+                v = v.__str__()  # try our best
+            finally:
+                serialisable[k] = v
+
         return serialisable
     
     def _result_from_code(self, code):
