@@ -21,9 +21,22 @@ export function activate(context: vscode.ExtensionContext) {
             }
         })
             .then((data) => {
-                const symbols = data as vscode.DocumentSymbol[];
-                console.log(symbols);
+                const symbols = data as vscode.SymbolInformation[];
+                console.log("active:");
                 console.log(editor.selection.active);
+                console.log("symbols");
+                console.log(symbols);
+
+                symbols.forEach((symbol: vscode.SymbolInformation) => {
+                    const range = new vscode.Range(
+                        new vscode.Position(symbol.location.range.start.line, symbol.location.range.start.character),
+                        new vscode.Position(symbol.location.range.end.line, symbol.location.range.end.character)
+                    );
+                    if (range.contains(editor.selection.active)) {
+                        console.log("found symbol at current cursor!");
+                        console.log(symbol);
+                    }
+                });
             });
     });
 
