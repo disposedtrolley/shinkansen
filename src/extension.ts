@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 
 import {
+    DocumentSymbolRequest,
     LanguageClient,
     LanguageClientOptions,
     ServerOptions,
@@ -12,7 +13,18 @@ export function activate(context: vscode.ExtensionContext) {
     console.log('"shinkansen" is now active!');
 
     let disposable = vscode.commands.registerCommand('shinkansen.evaluate', () => {
-        vscode.window.showInformationMessage('Hello World!');
+        const editor: vscode.TextEditor = vscode.window.activeTextEditor!;
+
+        client.sendRequest(DocumentSymbolRequest.method, {
+            textDocument: {
+                uri: editor.document.uri.toString()
+            }
+        })
+            .then((data) => {
+                const symbols = data as vscode.DocumentSymbol[];
+                console.log(symbols);
+                console.log(editor.selection.active);
+            });
     });
 
     context.subscriptions.push(disposable);

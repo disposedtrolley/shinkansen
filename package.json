@@ -39,7 +39,17 @@
                       "verbose"
                     ],
                     "default": "verbose"
-                  }
+                },
+                "shinkansenPython.completion": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Enable/disable completion feature"
+                },
+                "shinkansenPython.hover": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Enable/disable hover feature"
+                }
             }
         }
 	},
