@@ -90,6 +90,8 @@ if __name__ == '__main__':
     serversocket.bind((socket.gethostname(), PORT))
     serversocket.listen(5)
 
+    print("Server listening on", PORT)
+
     while True:
         try:
             (conn, addr) = serversocket.accept()
