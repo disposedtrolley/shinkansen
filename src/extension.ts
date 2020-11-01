@@ -20,23 +20,32 @@ export function activate(context: vscode.ExtensionContext) {
                 uri: editor.document.uri.toString()
             }
         })
-            .then((data) => {
-                const symbols = data as vscode.SymbolInformation[];
+            .then((result) => {
+                const symbols: vscode.SymbolInformation[] = (result as any[]).map(d => {
+                    const range = new vscode.Range(
+                        new vscode.Position(d.location.range.start.line, d.location.range.start.character),
+                        new vscode.Position(d.location.range.end.line, d.location.range.end.character)
+                    );
+                    const location = new vscode.Location(
+                        vscode.Uri.parse(d.location.uri),
+                        range
+                    );
+                    return new vscode.SymbolInformation(d.name, d.kind, d.containerName, location);
+                });
+
                 console.log("active:");
                 console.log(editor.selection.active);
-                console.log("symbols");
+                console.log("symbols:");
                 console.log(symbols);
 
-                symbols.forEach((symbol: vscode.SymbolInformation) => {
-                    const range = new vscode.Range(
-                        new vscode.Position(symbol.location.range.start.line, symbol.location.range.start.character),
-                        new vscode.Position(symbol.location.range.end.line, symbol.location.range.end.character)
-                    );
-                    if (range.contains(editor.selection.active)) {
-                        console.log("found symbol at current cursor!");
-                        console.log(symbol);
-                    }
-                });
+                const symbolUnderCursor: vscode.SymbolInformation | undefined = symbols.filter(s => s.location.range.contains(editor.selection.active))[0];
+                if (symbolUnderCursor) {
+                    console.log("found symbol at current cursor!");
+                    console.log(symbolUnderCursor);
+
+                    const source = editor.document.getText(symbolUnderCursor.location.range);
+                    console.log(source);
+                }
             });
     });
 
