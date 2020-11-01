@@ -14,7 +14,20 @@
   ],
 	"main": "./out/extension.js",
 	"contributes": {
-		"commands": []
+        "commands": [
+            {
+                "command": "shinkansen.evaluate",
+                "title": "Shinkansen: Evaluate"
+              }
+        ],
+        "keybindings": [
+            {
+              "command": "shinkansen.evaluate",
+              "key": "ctrl+enter",
+              "mac": "cmd+enter",
+              "when": "editorTextFocus"
+            }
+          ]
 	},
 	"scripts": {
 		"vscode:prepublish": "yarn run compile",
