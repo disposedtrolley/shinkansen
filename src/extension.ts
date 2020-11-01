@@ -9,6 +9,17 @@ import {
 
 let client: LanguageClient;
 
+const currentExpressionDecoration = vscode.window.createTextEditorDecorationType({
+    borderWidth: '1px',
+    borderStyle: 'solid',
+    light: {
+        borderColor: 'darkblue'
+    },
+    dark: {
+        borderColor: 'lightblue'
+    }
+});
+
 export function activate(context: vscode.ExtensionContext) {
     console.log('"shinkansen" is now active!');
 
@@ -38,6 +49,8 @@ export function activate(context: vscode.ExtensionContext) {
                 console.log("symbols:");
                 console.log(symbols);
 
+                // TODO need to iterate through all symbols at the cursor to inspect nested
+                //      symbols, i.e. methods in classes or constants in methods.
                 const symbolUnderCursor: vscode.SymbolInformation | undefined = symbols.filter(s => s.location.range.contains(editor.selection.active))[0];
                 if (symbolUnderCursor) {
                     console.log("found symbol at current cursor!");
@@ -45,6 +58,7 @@ export function activate(context: vscode.ExtensionContext) {
 
                     const source = editor.document.getText(symbolUnderCursor.location.range);
                     console.log(source);
+                    editor.setDecorations(currentExpressionDecoration, [symbolUnderCursor.location.range]);
                 }
             });
     });
