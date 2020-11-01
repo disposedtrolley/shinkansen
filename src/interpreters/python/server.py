@@ -10,7 +10,7 @@ PORT = 1337
 
 class SocketInterpreter(InteractiveInterpreter):
     def __init__(self):
-        InteractiveInterpreter.__init__(self, {})
+        InteractiveInterpreter.__init__(self)
         self._last_expr_result = None
         self._last_expr_error = None
         self._incomplete = False
@@ -42,7 +42,7 @@ class SocketInterpreter(InteractiveInterpreter):
         self._incomplete = False
 
     def _trimmed_locals(self):
-        return {k: v for k, v in self.locals.items() if k not in ["__builtins__"]}
+        return {k: v for k, v in self.locals.items() if k not in ["__builtins__", "__doc__", "__name__"]}
 
     def _serialisable_locals(self):
         serialisable = {}
