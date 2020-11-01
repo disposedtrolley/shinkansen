@@ -87,6 +87,16 @@ class SocketInterpreter(InteractiveInterpreter):
         """
         return buf.getvalue().rstrip("\n")
 
+    def _results(self):
+        """Returns JSON serialised results of calling `evaluate().
+        """
+        return json.dumps({
+            "locals": self._serialisable_locals(),
+            "last_expr_result": self._last_expr_result,
+            "last_expr_error": self._last_expr_error,
+            "incomplete": self._incomplete
+        })
+
     def evaluate(self, source):
         """Evaluates the expression in `source`.
         """
@@ -97,17 +107,7 @@ class SocketInterpreter(InteractiveInterpreter):
             # `source` is a class or function signature and a body must be
             # supplied.
             self._incomplete = True
-        return ret
-
-    def results(self):
-        """Returns JSON serialised results of calling `evaluate().
-        """
-        return json.dumps({
-            "locals": self._serialisable_locals(),
-            "last_expr_result": self._last_expr_result,
-            "last_expr_error": self._last_expr_error,
-            "incomplete": self._incomplete
-        })
+        return self._results()
 
 
 if __name__ == '__main__':
@@ -132,8 +132,8 @@ if __name__ == '__main__':
                     break
                 # Decode, evaluate, and return the results.
                 expr = data.decode(ENCODING)
-                interp.evaluate(expr)
-                conn.sendall(interp.results().encode(ENCODING))
+                results = interp.evaluate(expr) 
+                conn.sendall(results.encode(ENCODING))
         except KeyboardInterrupt:
             # Graceful shutdown.
             print('Qutting...')
