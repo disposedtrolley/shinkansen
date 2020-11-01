@@ -8,6 +8,7 @@ import sys
 ENCODING = 'utf-8'
 PORT = 1337
 
+
 class SocketInterpreter(InteractiveInterpreter):
     def __init__(self):
         InteractiveInterpreter.__init__(self)
@@ -67,7 +68,7 @@ class SocketInterpreter(InteractiveInterpreter):
                 serialisable[k] = v
 
         return serialisable
-    
+
     def _result_from_code(self, code):
         """Attempts to return the value gained from executing the expression
         in `code`.
@@ -75,12 +76,13 @@ class SocketInterpreter(InteractiveInterpreter):
         if len(code.co_names) == 0:
             return None
 
+        # TODO function calls return the function name instead of the result
         key = code.co_names[-1]
         if key not in self._serialisable_locals():
             return None
-        
+
         return self._serialisable_locals()[key]
-    
+
     def _result_from_stdout(self, buf):
         """Returns anything captured from STDOUT during the execution of an
         expression.
@@ -132,7 +134,7 @@ if __name__ == '__main__':
                     break
                 # Decode, evaluate, and return the results.
                 expr = data.decode(ENCODING)
-                results = interp.evaluate(expr) 
+                results = interp.evaluate(expr)
                 conn.sendall(results.encode(ENCODING))
         except KeyboardInterrupt:
             # Graceful shutdown.

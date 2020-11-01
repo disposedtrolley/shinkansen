@@ -1,5 +1,5 @@
-import { createConnection } from 'net';
-import { createInterface } from 'readline';
+const createConnection = require('net').createConnection;
+const createInterface = require('readline').createInterface;
 
 const readline = createInterface({
     input: process.stdin,
