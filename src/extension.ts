@@ -1,9 +1,13 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 
-// this method is called when your extension is activated
-// your extension is activated the very first time the command is executed
+import {
+    LanguageClient,
+    LanguageClientOptions,
+    ServerOptions,
+} from 'vscode-languageclient';
+
+let client: LanguageClient;
+
 export function activate(context: vscode.ExtensionContext) {
     console.log('"shinkansen" is now active!');
 
@@ -12,7 +16,30 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     context.subscriptions.push(disposable);
-}
 
-// this method is called when your extension is deactivated
-export function deactivate() { }
+    // LSP
+    let serverOptions: ServerOptions = {
+        command: "pyls",
+        args: ["--verbose"]
+    };
+
+    let clientOptions: LanguageClientOptions = {
+        documentSelector: [{ scheme: 'file', language: 'python' }],
+    };
+
+    client = new LanguageClient(
+        'shinkansenPython',
+        'Shinkansen - pyls',
+        serverOptions,
+        clientOptions
+    );
+
+    client.start();
+};
+
+export function deactivate() {
+    if (!client) {
+        return undefined;
+    }
+    return client.stop();
+}
