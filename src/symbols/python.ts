@@ -84,8 +84,6 @@ export class PythonSymbolProvider implements SymbolProvider {
         console.log("symbols:");
         console.log(symbols);
 
-        // TODO cursor will be at the next empty char, which is outside the range of
-        // the current single line expr.
         // TODO probably need to filter on the most specific expression, which may be the one
         // without a containerName.
         const symbolUnderCursor = symbols.filter(s => s.expression().range.contains(p))[0];

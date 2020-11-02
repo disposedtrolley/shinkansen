@@ -80,7 +80,6 @@ class SocketInterpreter(InteractiveInterpreter):
         if len(code.co_names) == 0:
             return None
 
-        # TODO function calls return the function name instead of the result
         key = code.co_names[-1]
         if key not in self._serialisable_locals():
             return None

@@ -1,4 +1,3 @@
-import { NetworkInterfaceBase } from 'os';
 import * as vscode from 'vscode';
 
 export interface Symbol {
