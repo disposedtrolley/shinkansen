@@ -1,11 +1,15 @@
 import * as vscode from 'vscode';
 import { createConnection } from 'net';
+import { PythonSymbol, PythonSymbolProvider } from './symbols/python';
 
 let currentEditor: vscode.TextEditor;
 let symbolUnderCursor: vscode.SymbolInformation | undefined;
+let symbolProvider: PythonSymbolProvider;
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('"shinkansen" is now active!');
+
+    symbolProvider = new PythonSymbolProvider();
 
     const interpreterClient = createConnection({ port: 1337 }, () => {
         console.log('connected!');
@@ -31,39 +35,16 @@ export function activate(context: vscode.ExtensionContext) {
     let disposable = vscode.commands.registerCommand('shinkansen.evaluate', () => {
         currentEditor = vscode.window.activeTextEditor!;
 
-        vscode.commands.executeCommand('vscode.executeDocumentSymbolProvider', currentEditor.document.uri)
-            .then((result) => {
-                const symbols: vscode.SymbolInformation[] = (result as any[]).map(d => {
-                    const range = new vscode.Range(
-                        new vscode.Position(d.location.range.start.line, d.location.range.start.character),
-                        new vscode.Position(d.location.range.end.line, d.location.range.end.character)
-                    );
-                    const location = new vscode.Location(
-                        vscode.Uri.parse(d.location.uri),
-                        range
-                    );
-                    return new vscode.SymbolInformation(d.name, d.kind, d.containerName, location);
-                });
-
-                console.log("active:");
-                console.log(currentEditor.selection.active);
-                console.log("symbols:");
-                console.log(symbols);
-
-                // TODO need to iterate through all symbols at the cursor to inspect nested
-                //      symbols, i.e. methods in classes or constants in methods.
-                symbolUnderCursor = symbols.filter(s => s.location.range.contains(currentEditor.selection.active))[0];
-                if (symbolUnderCursor) {
-                    console.log("found symbol at current cursor!");
-                    console.log(symbolUnderCursor);
-
-                    const source = currentEditor.document.getText(symbolUnderCursor.location.range);
-                    console.log(source);
-                    // currentEditor.setDecorations(currentExpressionDecoration, [symbolUnderCursor.location.range]);
-
-                    interpreterClient.write(source + "\n" + "\n");
+        symbolProvider.symbolAtPoint(currentEditor.selection.active, currentEditor.document.uri)
+            .then((symbol: PythonSymbol | null) => {
+                if (!symbol) {
+                    return;
                 }
+
+                console.log("pythonSymbol:");
+                console.log(symbol);
             });
+
     });
 
     context.subscriptions.push(disposable);
