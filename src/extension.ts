@@ -3,7 +3,6 @@ import { createConnection } from 'net';
 import { PythonSymbol, PythonSymbolProvider } from './symbols/python';
 
 let currentEditor: vscode.TextEditor;
-let symbolUnderCursor: vscode.SymbolInformation | undefined;
 let symbolProvider: PythonSymbolProvider;
 
 export function activate(context: vscode.ExtensionContext) {
@@ -23,11 +22,13 @@ export function activate(context: vscode.ExtensionContext) {
         const j = JSON.parse(data.toString());
         console.log(j);
 
+        // TODO handle incomplete expressions.
+
         currentEditor.edit(e => {
             e.insert(
                 new vscode.Position(
-                    symbolUnderCursor!.location.range.end.line,
-                    symbolUnderCursor!.location.range.end.character),
+                    currentEditor.selection.active.line,
+                    currentEditor.selection.active.character + 2),
                 `    # => ${j.last_expr_result}`);
         });
     });
@@ -38,11 +39,14 @@ export function activate(context: vscode.ExtensionContext) {
         symbolProvider.symbolAtPoint(currentEditor.selection.active, currentEditor.document)
             .then((symbol: PythonSymbol | null) => {
                 if (!symbol) {
+                    // TODO we get here when no new symbols are in the active selection.
+                    interpreterClient.write(currentEditor.document.lineAt(currentEditor.selection.active.line).text);
                     return;
                 }
 
                 console.log("pythonSymbol:");
                 console.log(symbol);
+                interpreterClient.write(symbol.expression().body);
             });
 
     });
