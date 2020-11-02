@@ -31,9 +31,9 @@ class SocketInterpreter(InteractiveInterpreter):
             buf = io.StringIO()
             with redirect_stdout(buf):
                 exec(code, self.locals)
-            result = self._result_from_code(code)
+            result = self._result_from_stdout(buf)
             if result is None:
-                result = self._result_from_stdout(buf)
+                result = self._result_from_code(code)
             self._last_expr_result = result
         except SystemExit:
             raise
@@ -87,7 +87,8 @@ class SocketInterpreter(InteractiveInterpreter):
         """Returns anything captured from STDOUT during the execution of an
         expression.
         """
-        return buf.getvalue().rstrip("\n")
+        val = buf.getvalue().rstrip("\n")
+        return None if val == "" else val
 
     def _results(self):
         """Returns JSON serialised results of calling `evaluate().
