@@ -1,13 +1,6 @@
 import * as vscode from 'vscode';
-import {
-    DocumentSymbolRequest,
-    LanguageClient,
-    LanguageClientOptions,
-    ServerOptions,
-} from 'vscode-languageclient';
 import { createConnection } from 'net';
 
-let client: LanguageClient;
 let currentEditor: vscode.TextEditor;
 let symbolUnderCursor: vscode.SymbolInformation | undefined;
 
@@ -38,11 +31,7 @@ export function activate(context: vscode.ExtensionContext) {
     let disposable = vscode.commands.registerCommand('shinkansen.evaluate', () => {
         currentEditor = vscode.window.activeTextEditor!;
 
-        client.sendRequest(DocumentSymbolRequest.method, {
-            textDocument: {
-                uri: currentEditor.document.uri.toString()
-            }
-        })
+        vscode.commands.executeCommand('vscode.executeDocumentSymbolProvider', currentEditor.document.uri)
             .then((result) => {
                 const symbols: vscode.SymbolInformation[] = (result as any[]).map(d => {
                     const range = new vscode.Range(
@@ -78,30 +67,6 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     context.subscriptions.push(disposable);
-
-    // LSP
-    let serverOptions: ServerOptions = {
-        command: "pyls",
-        args: ["--verbose"]
-    };
-
-    let clientOptions: LanguageClientOptions = {
-        documentSelector: [{ scheme: 'file', language: 'python' }],
-    };
-
-    client = new LanguageClient(
-        'shinkansenPython',
-        'Shinkansen - pyls',
-        serverOptions,
-        clientOptions
-    );
-
-    client.start();
 };
 
-export function deactivate() {
-    if (!client) {
-        return undefined;
-    }
-    return client.stop();
-}
+export function deactivate() {}
