@@ -1,38 +1,40 @@
-import { Symbol, SymbolProvider } from './symbol';
+import { Symbol, SymbolProvider, SymbolExpression} from './symbol';
 import * as vscode from 'vscode';
 
 const commandExecuteDocumentSymbolProvider = "vscode.executeDocumentSymbolProvider";
 
 export class PythonSymbol implements Symbol {
-    _identifier: string;
-    _kind: vscode.SymbolKind;
-    _body: string;
-    _range: vscode.Range;
+    private _symbol: vscode.SymbolInformation;
+    private _document: vscode.TextDocument;
 
-    constructor(symbolInformation: vscode.SymbolInformation) {
-        this._identifier = symbolInformation.name;
-        this._kind = symbolInformation.kind;
-        this._body = "foo";
-        this._range = symbolInformation.location.range;
+    constructor(symbolInformation: vscode.SymbolInformation, document: vscode.TextDocument) {
+        this._symbol = symbolInformation ;
+        this._document = document;
     }
 
     identifier(): string {
-        throw new Error('Method not implemented.');
+        return this._symbol.name; 
     }
     kind(): vscode.SymbolKind {
-        throw new Error('Method not implemented.');
+        return this._symbol.kind;
     }
     body(): string {
-        throw new Error('Method not implemented.');
+        return "foo body";
     }
     range(): vscode.Range {
-        throw new Error('Method not implemented.');
+        return this._symbol.location.range;
+    }
+    expression(): SymbolExpression {
+        return {
+            range: this.range(), // TODO fake so linter doesn't complain
+            body: ""
+        };
     }
 }
 
 export class PythonSymbolProvider implements SymbolProvider {
-    public async symbolAtPoint(p: vscode.Position, document: vscode.Uri): Promise<PythonSymbol | null> {
-        const res = await vscode.commands.executeCommand(commandExecuteDocumentSymbolProvider, document);
+    public async symbolAtPoint(p: vscode.Position, document: vscode.TextDocument): Promise<PythonSymbol | null> {
+        const res = await vscode.commands.executeCommand(commandExecuteDocumentSymbolProvider, document.uri);
         const symbols: vscode.SymbolInformation[] = (res as any[]).map(d => {
             const range = new vscode.Range(
                 new vscode.Position(d.location.range.start.line, d.location.range.start.character),
@@ -55,7 +57,7 @@ export class PythonSymbolProvider implements SymbolProvider {
             return null;
         }
 
-        const pySymbol = new PythonSymbol(symbolUnderCursor);
+        const pySymbol = new PythonSymbol(symbolUnderCursor, document);
         console.log("found symbol at current cursor!");
         console.log(pySymbol);
         return pySymbol;

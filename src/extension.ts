@@ -35,7 +35,7 @@ export function activate(context: vscode.ExtensionContext) {
     let disposable = vscode.commands.registerCommand('shinkansen.evaluate', () => {
         currentEditor = vscode.window.activeTextEditor!;
 
-        symbolProvider.symbolAtPoint(currentEditor.selection.active, currentEditor.document.uri)
+        symbolProvider.symbolAtPoint(currentEditor.selection.active, currentEditor.document)
             .then((symbol: PythonSymbol | null) => {
                 if (!symbol) {
                     return;
