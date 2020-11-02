@@ -4,28 +4,34 @@ import * as vscode from 'vscode';
 const commandExecuteDocumentSymbolProvider = "vscode.executeDocumentSymbolProvider";
 
 export class PythonSymbol implements Symbol {
-    private _symbol: vscode.SymbolInformation;
+    private _identifier: string;
+    private _containerIdentifier: string;
+    private _range: vscode.Range;
+    private _kind: vscode.SymbolKind; 
     private _document: vscode.TextDocument;
 
-    constructor(symbolInformation: vscode.SymbolInformation, document: vscode.TextDocument) {
-        this._symbol = symbolInformation ;
+    constructor(identifier: string, containerIdentifier: string, kind: vscode.SymbolKind, range: vscode.Range, document: vscode.TextDocument) {
+        this._identifier = identifier;
+        this._containerIdentifier = containerIdentifier;
+        this._kind = kind;
+        this._range = range;
         this._document = document;
     }
 
     identifier(): string {
-        return this._symbol.name; 
+        return this._identifier;
     }
     kind(): vscode.SymbolKind {
-        return this._symbol.kind;
+        return this._kind;
     }
     range(): vscode.Range {
-        return this._symbol.location.range;
+        return this._range;
     }
     expression(): SymbolExpression {
         let range: vscode.Range;
 
         // TODO use `kind` enum instead of checking the string.
-        if (this._symbol.containerName === "") {
+        if (this._containerIdentifier === "") {
             let curLineText = this._document.lineAt(this.range().start);
             let lastCharPos = new vscode.Position(this.range().start.line, Math.max(curLineText.text.length-1, 0));
 
@@ -52,11 +58,8 @@ export class PythonSymbolProvider implements SymbolProvider {
                 new vscode.Position(d.location.range.start.line, d.location.range.start.character),
                 new vscode.Position(d.location.range.end.line, d.location.range.end.character)
             );
-            const location = new vscode.Location(
-                vscode.Uri.parse(d.location.uri),
-                range
-            );
-            return new PythonSymbol(new vscode.SymbolInformation(d.name, d.kind, d.containerName, location), document);
+            
+            return new PythonSymbol(d.name, d.containerName, d.kind, range, document);
         });
 
         console.log("active:");
