@@ -63,9 +63,13 @@ class SocketInterpreter(InteractiveInterpreter):
             try:
                 json.dumps(v)
             except (TypeError, OverflowError):
-                v = v.__str__()  # try our best
-            finally:
-                serialisable[k] = v
+                # Catches a weird issue with class serialisation.
+                # TODO need to investigate further.
+                try:
+                    v = v.__str__()  # try our best
+                except TypeError:
+                    continue
+            serialisable[k] = v
 
         return serialisable
 
