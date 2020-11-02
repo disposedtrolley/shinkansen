@@ -134,8 +134,10 @@ if __name__ == '__main__':
                     break
                 # Decode, evaluate, and return the results.
                 expr = data.decode(ENCODING)
+                print("received expr:", expr)
                 results = interp.evaluate(expr)
                 conn.sendall(results.encode(ENCODING))
+                print("send results:", results)
         except KeyboardInterrupt:
             # Graceful shutdown.
             print('Qutting...')

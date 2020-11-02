@@ -1,34 +1,46 @@
 import * as vscode from 'vscode';
-
 import {
     DocumentSymbolRequest,
     LanguageClient,
     LanguageClientOptions,
     ServerOptions,
 } from 'vscode-languageclient';
+import { createConnection } from 'net';
 
 let client: LanguageClient;
-
-const currentExpressionDecoration = vscode.window.createTextEditorDecorationType({
-    borderWidth: '1px',
-    borderStyle: 'solid',
-    light: {
-        borderColor: 'darkblue'
-    },
-    dark: {
-        borderColor: 'lightblue'
-    }
-});
+let currentEditor: vscode.TextEditor;
+let symbolUnderCursor: vscode.SymbolInformation | undefined;
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('"shinkansen" is now active!');
 
+    const interpreterClient = createConnection({ port: 1337 }, () => {
+        console.log('connected!');
+    });
+
+    interpreterClient.on('end', () => {
+        console.log('disconnected');
+    });
+
+    interpreterClient.on('data', (data: string) => {
+        const j = JSON.parse(data.toString());
+        console.log(j);
+
+        currentEditor.edit(e => {
+            e.insert(
+                new vscode.Position(
+                    symbolUnderCursor!.location.range.end.line,
+                    symbolUnderCursor!.location.range.end.character),
+                `    # => ${j.last_expr_result}`);
+        });
+    });
+
     let disposable = vscode.commands.registerCommand('shinkansen.evaluate', () => {
-        const editor: vscode.TextEditor = vscode.window.activeTextEditor!;
+        currentEditor = vscode.window.activeTextEditor!;
 
         client.sendRequest(DocumentSymbolRequest.method, {
             textDocument: {
-                uri: editor.document.uri.toString()
+                uri: currentEditor.document.uri.toString()
             }
         })
             .then((result) => {
@@ -45,20 +57,22 @@ export function activate(context: vscode.ExtensionContext) {
                 });
 
                 console.log("active:");
-                console.log(editor.selection.active);
+                console.log(currentEditor.selection.active);
                 console.log("symbols:");
                 console.log(symbols);
 
                 // TODO need to iterate through all symbols at the cursor to inspect nested
                 //      symbols, i.e. methods in classes or constants in methods.
-                const symbolUnderCursor: vscode.SymbolInformation | undefined = symbols.filter(s => s.location.range.contains(editor.selection.active))[0];
+                symbolUnderCursor = symbols.filter(s => s.location.range.contains(currentEditor.selection.active))[0];
                 if (symbolUnderCursor) {
                     console.log("found symbol at current cursor!");
                     console.log(symbolUnderCursor);
 
-                    const source = editor.document.getText(symbolUnderCursor.location.range);
+                    const source = currentEditor.document.getText(symbolUnderCursor.location.range);
                     console.log(source);
-                    editor.setDecorations(currentExpressionDecoration, [symbolUnderCursor.location.range]);
+                    // currentEditor.setDecorations(currentExpressionDecoration, [symbolUnderCursor.location.range]);
+
+                    interpreterClient.write(source + "\n" + "\n");
                 }
             });
     });
