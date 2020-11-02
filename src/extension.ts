@@ -4,6 +4,9 @@ import { PythonSymbol, PythonSymbolProvider } from './symbols/python';
 
 let currentEditor: vscode.TextEditor;
 let symbolProvider: PythonSymbolProvider;
+let expressionBuffer: string;
+let lastExpression: string;
+let isIncomplete: boolean = false;
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('"shinkansen" is now active!');
@@ -22,7 +25,7 @@ export function activate(context: vscode.ExtensionContext) {
         const j = JSON.parse(data.toString());
         console.log(j);
 
-        // TODO handle incomplete expressions.
+        isIncomplete = j.incomplete;
 
         currentEditor.edit(e => {
             e.insert(
@@ -38,15 +41,32 @@ export function activate(context: vscode.ExtensionContext) {
 
         symbolProvider.symbolAtPoint(currentEditor.selection.active, currentEditor.document)
             .then((symbol: PythonSymbol | null) => {
-                if (!symbol) {
-                    // TODO we get here when no new symbols are in the active selection.
-                    interpreterClient.write(currentEditor.document.lineAt(currentEditor.selection.active.line).text);
-                    return;
+                let expr;
+                if (symbol) {
+                    console.log("pythonSymbol:");
+                    console.log(symbol);
+                    expr = symbol.expression().body;
+                } else {
+                    expr = currentEditor.document.lineAt(currentEditor.selection.active.line).text;
                 }
 
-                console.log("pythonSymbol:");
-                console.log(symbol);
-                interpreterClient.write(symbol.expression().body);
+                // If the last expression was incomplete, this one needs to be
+                // appended to the buffer.
+                if (isIncomplete) {
+                    // We can end an incomplete expression by evaluating the exact same
+                    // line again.
+                    // `startsWith()` because the expression now contains the result of
+                    // evaluation.
+                    expressionBuffer =
+                        expr.startsWith(lastExpression) ? 
+                        `${expressionBuffer}\n\n` : `${expressionBuffer}\n${expr}`;
+                } else {
+                    // Reset
+                    expressionBuffer = expr;
+                }
+
+                lastExpression = expr;
+                interpreterClient.write(expressionBuffer);
             });
 
     });
@@ -54,4 +74,4 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(disposable);
 };
 
-export function deactivate() {}
+export function deactivate() { }
