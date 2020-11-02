@@ -66,6 +66,10 @@ export class PythonSymbol implements Symbol {
 export class PythonSymbolProvider implements SymbolProvider {
     public async symbolAtPoint(p: vscode.Position, document: vscode.TextDocument): Promise<PythonSymbol | null> {
         const res = await vscode.commands.executeCommand(commandExecuteDocumentSymbolProvider, document.uri);
+        if (!res) {
+            return null;
+        }
+
         const symbols: PythonSymbol[] = (res as any[]).map(d => {
             const range = new vscode.Range(
                 new vscode.Position(d.location.range.start.line, d.location.range.start.character),
