@@ -49,7 +49,7 @@ export class PythonInterpreterProvider implements InterpreterProvider {
                 if (data.includes("Server listening on")) {
                     setTimeout(() => {
                         console.log('Python REPL is ready...');
-                        this.connection = createConnection({ port: this.port, host: hostname()}, () => {
+                        this.connection = createConnection({ port: this.port }, () => {
                             resolve();
                         });
 

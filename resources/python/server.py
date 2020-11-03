@@ -119,7 +119,7 @@ class SocketInterpreter(InteractiveInterpreter):
 if __name__ == '__main__':
     # Listen for client connections.
     serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    serversocket.bind((socket.gethostname(), PORT))
+    serversocket.bind((socket.gethostbyname(""), PORT))
     serversocket.listen(5)  # 5 is arbitrary
     print("Server listening on", PORT)
     sys.stdout.flush()  # flush so the VSCode extension can read this from stdout.
