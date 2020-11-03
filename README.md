@@ -60,5 +60,36 @@ Since the extension isn't published on the Marketplace, you'll need to install t
 ### Usage
 
 1. Create a new `.py` file with VSCode and type in `x = 1`.
-2. Move your cursor to the end of that line, and hit `Command-Enter`.
-3. You should see the line change to `x = 1  # => 1`.
+2. Move your cursor to the end of that line, and hit `Command + Enter`.
+3. You should see the line change to `x = 1  # => 1`. This confirms it's working!
+
+For something a little more advanced, let's define a class, create an instance of it, and call an instance method.
+
+1. Type the following in the same `.py` file:
+
+```py
+class Dog():
+    def __init__(self, name):
+        self.name = name
+    
+    def bark(self):
+        print(f"Woof woof from {self.name}")
+```
+
+2. Place your cursor at the end of the `print()` function, and hit `Command + Enter`. You should see the result `null`.
+3. Create a new Dog called Spot:
+
+```py
+d = Dog("Spot")
+```
+
+4. Evaluate the expression by hitting `Command + Enter` at the end of the line. You should see some information about Spot.
+5. Make Spot bark:
+
+```py
+d.bark()
+```
+
+6. Again, move the cursor to the end of the line evaluate with `Command + Enter`. You should see the result `Woof woof from Spot`.
+
+This is just a taste of what Shinkansen currently supports! You can play around with some expressions of your own, and even try `import`ing modules to use their functionality.  If results stop appearing, try restarting VSCode.
