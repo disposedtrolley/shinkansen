@@ -44,28 +44,31 @@ export class PythonInterpreterProvider implements InterpreterProvider {
                 // We'll know when the server has started by looking for the startup
                 // message. @TODO this should be more robust!
                 if (data.includes("Server listening on")) {
-                    console.log('Python REPL is ready...');
-                    this.connection = createConnection({ port: this.port }, () => {
-                        resolve();
-                    });
-        
-                    this.connection.on('error', (e: Error) => {
-                        this.onError(e);
-                    });
-        
-                    this.connection.on('data', (d: Buffer) => {
-                        const json = JSON.parse(d.toString());
-                        this.onReceive({
-                            locals: json["locals"],
-                            lastExprResult: json["last_expr_result"],
-                            lastExprError: json["last_expr_error"],
-                            incomplete: json["incomplete"]
+                    setTimeout(() => {
+                        console.log('Python REPL is ready...');
+                        this.connection = createConnection({ port: this.port }, () => {
+                            resolve();
                         });
-                    });
-        
-                    this.connection.on('end', () => {
-                        this.onDisconnect();
-                    });
+
+                        this.connection.on('error', (e: Error) => {
+                            this.onError(e);
+                        });
+
+                        this.connection.on('data', (d: Buffer) => {
+                            const json = JSON.parse(d.toString());
+                            this.onReceive({
+                                locals: json["locals"],
+                                lastExprResult: json["last_expr_result"],
+                                lastExprError: json["last_expr_error"],
+                                incomplete: json["incomplete"]
+                            });
+                        });
+
+                        this.connection.on('end', () => {
+                            this.onDisconnect();
+                        });
+
+                    }, 1000);
                 }
             });
 
@@ -78,6 +81,13 @@ export class PythonInterpreterProvider implements InterpreterProvider {
                 console.log(`[Python REPL] cexited with code ${code}`);
                 this.onDisconnect();
             });
+        });
+    }
+
+    disconnect(): void {
+        // End the socket connection to the remote REPL, then kill it.
+        this.connection?.end(() => {
+            this.remoteProcess?.kill();
         });
     }
 

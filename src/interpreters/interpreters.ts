@@ -15,6 +15,7 @@ export interface InterpreterResult {
  */
 export interface InterpreterProvider {
     connect(): Promise<any>;
+    disconnect(): void;
     onReceive: ((data: InterpreterResult) => void);
     onError: ((error: Error) => void);
     onDisconnect: (() => void);
