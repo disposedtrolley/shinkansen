@@ -56,7 +56,6 @@ export function activate(context: vscode.ExtensionContext) {
     state.symbolProvider = new PythonSymbolProvider();
 
     const pythonServerPath = context.asAbsolutePath("./resources/python/server.py");
-    vscode.window.showInformationMessage(pythonServerPath);
     state.interpreterProvider = new PythonInterpreterProvider(pythonServerPath, 1337, onInterpreterReceive, onInterpreterError, onInterpreterDisconnect);
     state.interpreterProvider.connect()
         .then(onInterpreterConnect);
