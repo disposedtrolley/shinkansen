@@ -1,7 +1,12 @@
 {
 	"name": "shinkansen",
 	"displayName": "Shinkansen",
-	"description": "High-speed development",
+    "description": "High-speed development",
+    "publisher": "disposedtrolley",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/disposedtrolley/shinkansen"
+    },
 	"version": "0.0.1",
 	"engines": {
 		"vscode": "^1.50.0"
