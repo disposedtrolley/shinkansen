@@ -6,6 +6,8 @@ Shinkansen is an experiment in **live programming** by bringing the power of the
 
 Write an expression, hit `Command + Enter`, and Shinkansen will evaluate and display the results next to your cursor. Gone are the days of copying and pasting code into a cumbersome REPL window while missing out on all of the great Intellisense features of VSCode.
 
+![Screenshot of Shinkansen in action](shinkansen_demo.png)
+
 ### Why do we need this?
 
 It's 2020 and we've yet to see a significant improvement in the way programs are written. Linear text files, compilation, entry points, and a separate debug mode are still prevalent in almost all programming languages.
