@@ -40,14 +40,17 @@ const onInterpreterReceive = (data: InterpreterResult) => {
 
 const onInterpreterConnect = () => {
     console.log('connected!');
+    vscode.window.showInformationMessage('[Shinkansen] Connected to a remote REPL and is ready!');
 };
 
 const onInterpreterDisconnect = () => {
     console.log('disconnected!');
+    vscode.window.showErrorMessage('[Shinkansen] The remote REPL has been disconnected. Reload VSCode to connect again.');
 };
 
 const onInterpreterError = (e: Error) => {
     console.error(e);
+    vscode.window.showWarningMessage(`[Shinkansen] Error from remote REPL: ${e.message}`);
 };
 
 export function activate(context: vscode.ExtensionContext) {
