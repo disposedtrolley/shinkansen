@@ -57,7 +57,7 @@ Since the extension isn't published on the Marketplace, you'll need to install t
 2. Install the extension into VSCode by running `code --install-extension <path/to/shinkansen-0.0.1.vsix>`
 
 
-### Usage
+## Usage
 
 1. Create a new `.py` file with VSCode and type in `x = 1`.
 2. Move your cursor to the end of that line, and hit `Command + Enter`.
@@ -93,3 +93,12 @@ d.bark()
 6. Again, move the cursor to the end of the line evaluate with `Command + Enter`. You should see the result `Woof woof from Spot`.
 
 This is just a taste of what Shinkansen currently supports! You can play around with some expressions of your own, and even try `import`ing modules to use their functionality.  If results stop appearing, try restarting VSCode.
+
+## Troubleshooting
+
+* The best thing to do if issues occur is to restart VSCode. This will kill the remote REPL along with any bad state it was holding onto.
+
+### Known issues
+
+* No Windows compatibility. There's a issue with establishing socket errors on Windows that I ran out of time to investigate.
+* No more than one VSCode workspace containing active Python editors can be open at once. The remote REPL listens on a single socket and it can only be occupied by one client.
