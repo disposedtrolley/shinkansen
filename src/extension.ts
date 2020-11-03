@@ -1,10 +1,13 @@
 import * as vscode from 'vscode';
-import { createConnection } from 'net';
-import { PythonSymbol, PythonSymbolProvider } from './symbols/python';
+import { SymbolProvider, Symbol } from './symbols/symbol';
+import { PythonSymbolProvider } from './symbols/python';
+import { InterpreterProvider } from './interpreters/interpreters';
+import { PythonInterpreterProvider } from './interpreters/python';
 
 interface State {
     currentEditor?: vscode.TextEditor;
-    symbolProvider?: PythonSymbolProvider;
+    symbolProvider?: SymbolProvider;
+    interpreterProvider?: InterpreterProvider;
     expressionBuffer: string;
     lastExpression: string;
     isIncomplete: boolean;
@@ -13,9 +16,37 @@ interface State {
 let state: State = {
     currentEditor: undefined,
     symbolProvider: undefined,
+    interpreterProvider: undefined,
     expressionBuffer: "",
     lastExpression: "",
     isIncomplete: false
+};
+
+const onInterpreterReceive = (data: string) => {
+    const j = JSON.parse(data);
+    console.log(j);
+
+    state.isIncomplete = j.incomplete;
+
+    state.currentEditor?.edit(e => {
+        e.insert(
+            new vscode.Position(
+                state.currentEditor!.selection.active.line,
+                state.currentEditor!.selection.active.character + 2),
+            `    # => ${j.last_expr_result}`);
+    });
+};
+
+const onInterpreterConnect = () => {
+    console.log('connected!');
+};
+
+const onInterpreterDisconnect = () => {
+    console.log('disconnected!');
+};
+
+const onInterpreterError = (e: Error) => {
+    console.error(e);
 };
 
 export function activate(context: vscode.ExtensionContext) {
@@ -23,33 +54,14 @@ export function activate(context: vscode.ExtensionContext) {
 
     state.symbolProvider = new PythonSymbolProvider();
 
-    const interpreterClient = createConnection({ port: 1337 }, () => {
-        console.log('connected!');
-    });
-
-    interpreterClient.on('end', () => {
-        console.log('disconnected');
-    });
-
-    interpreterClient.on('data', (data: string) => {
-        const j = JSON.parse(data.toString());
-        console.log(j);
-        state.isIncomplete = j.incomplete;
-
-        state.currentEditor?.edit(e => {
-            e.insert(
-                new vscode.Position(
-                    state.currentEditor!.selection.active.line,
-                    state.currentEditor!.selection.active.character + 2),
-                `    # => ${j.last_expr_result}`);
-        });
-    });
-
+    state.interpreterProvider = new PythonInterpreterProvider(1337, onInterpreterReceive, onInterpreterError, onInterpreterDisconnect);
+    state.interpreterProvider.connect()
+        .then(onInterpreterConnect);
+    
     let disposable = vscode.commands.registerCommand('shinkansen.evaluate', () => {
         state.currentEditor = vscode.window.activeTextEditor!;
-
         state.symbolProvider!.symbolAtPoint(state.currentEditor.selection.active, state.currentEditor.document)
-            .then((symbol: PythonSymbol | null) => {
+            .then((symbol: Symbol | null) => {
                 let expr;
                 if (symbol) {
                     console.log("pythonSymbol:");
@@ -74,8 +86,8 @@ export function activate(context: vscode.ExtensionContext) {
                     state.expressionBuffer = expr;
                 }
 
+                state.interpreterProvider!.send(state.expressionBuffer);
                 state.lastExpression = expr;
-                interpreterClient.write(state.expressionBuffer);
             });
 
     });
