@@ -1,6 +1,10 @@
 import { createConnection, Socket } from "net";
 import { InterpreterProvider, InterpreterResult } from './interpreters';
 
+/**
+ * The PythonInterpreterProvider establishes a connection to a remote Python 3 
+ * REPL.
+ */
 export class PythonInterpreterProvider implements InterpreterProvider {
     private port: number;
     private connection?: Socket;
@@ -18,6 +22,10 @@ export class PythonInterpreterProvider implements InterpreterProvider {
         this.onDisconnect = onDisconnect;
     }
 
+    /**
+     * Returns an empty promise (heh) when the connection is successful.
+     * Internally establishes all required callbacks to interact with the socket.
+     */
     async connect(): Promise<any> {
         this.connection = createConnection({ port: this.port }, () => {
             return new Promise((resolve, _) => {
@@ -44,6 +52,12 @@ export class PythonInterpreterProvider implements InterpreterProvider {
         });
     }
 
+    /**
+     * Attempts to send a string to the remote REPL. Throws an error if the
+     * socket connection hasn't been initialised yet, i.e. if `connect()`
+     * hasn't been called.
+     * @param data String to send to the remote REPL.
+     */
     send(data: string): void {
         if (!this.connection) {
             throw new Error("No connection to server. Did you call `connect()`?");

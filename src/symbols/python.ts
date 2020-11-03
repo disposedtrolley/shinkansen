@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 
 const commandExecuteDocumentSymbolProvider = "vscode.executeDocumentSymbolProvider";
 
+// SymbolKinds which have a body (multiline).
 const scopeableKinds: vscode.SymbolKind[] = [
     vscode.SymbolKind.Namespace,
     vscode.SymbolKind.Package,
@@ -42,10 +43,13 @@ export class PythonSymbol implements Symbol {
         let range: vscode.Range;
         let body: string;
 
+        // The Pylance LSP we're using for Python will return the entire
+        // block if the symbol was a scopeable (i.e. function or class).
         if (scopeableKinds.includes(this.kind())) {
             range = this.range();
             body = `${this._document.getText(range)}\n\n`;
         } else {
+            // If not a block, consider the current active editor line as the expression to evaluate.
             let curLineText = this._document.lineAt(this.range().start);
             let lastCharPos = new vscode.Position(this.range().start.line, Math.max(curLineText.text.length, 0));
 
@@ -65,6 +69,7 @@ export class PythonSymbol implements Symbol {
 
 export class PythonSymbolProvider implements SymbolProvider {
     public async symbolAtPoint(p: vscode.Position, document: vscode.TextDocument): Promise<PythonSymbol | null> {
+        // Execute a command which the Python and Pylance extensions have registered a handler for.
         const res = await vscode.commands.executeCommand(commandExecuteDocumentSymbolProvider, document.uri);
         if (!res) {
             return null;

@@ -4,6 +4,10 @@ import { PythonSymbolProvider } from './symbols/python';
 import { InterpreterProvider, InterpreterResult } from './interpreters/interpreters';
 import { PythonInterpreterProvider } from './interpreters/python';
 
+/**
+ * All of the mutable state currently used. @TODO will make it easier to refactor
+ * this to take a more functional approach.
+ */
 interface State {
     currentEditor?: vscode.TextEditor;
     symbolProvider?: SymbolProvider;

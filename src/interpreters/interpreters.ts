@@ -1,8 +1,7 @@
 /**
- * InterpreterProviders are classes which connect to a remote REPL of some sort,
- * allowing program expressions to be sent, and results to be received.
+ * An InterpreterResult is the parsed response from an IntepreterProvider,
+ * containing the new state of the program after evaluating an expression.
  */
-
 export interface InterpreterResult {
     locals: [string: any];
     lastExprResult: string;
@@ -10,6 +9,10 @@ export interface InterpreterResult {
     incomplete: boolean;
 }
 
+/**
+ * InterpreterProviders are classes which connect to a remote REPL of some sort,
+ * allowing program expressions to be sent, and results to be received.
+ */
 export interface InterpreterProvider {
     connect(): Promise<any>;
     onReceive: ((data: InterpreterResult) => void);
