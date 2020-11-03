@@ -1,6 +1,7 @@
 import { createConnection, Socket } from "net";
 import { spawn, ChildProcess } from 'child_process';
 import { InterpreterProvider, InterpreterResult } from './interpreters';
+import { hostname } from 'os';
 
 /**
  * The PythonInterpreterProvider establishes a connection to a remote Python 3 
@@ -48,7 +49,7 @@ export class PythonInterpreterProvider implements InterpreterProvider {
                 if (data.includes("Server listening on")) {
                     setTimeout(() => {
                         console.log('Python REPL is ready...');
-                        this.connection = createConnection({ port: this.port }, () => {
+                        this.connection = createConnection({ port: this.port, host: hostname()}, () => {
                             resolve();
                         });
 
