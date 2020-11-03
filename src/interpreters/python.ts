@@ -35,6 +35,8 @@ export class PythonInterpreterProvider implements InterpreterProvider {
      */
     connect(): Promise<any> {
         return new Promise((resolve, _) => {
+            if (this.connection) { resolve(); };
+
             // @TODO this should use the full path of the Python 3 executable
             // currently selected in VSCode.
             this.remoteProcess = spawn('python3', [this.serverPath]);
