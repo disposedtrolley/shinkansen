@@ -47,7 +47,7 @@ the Language Server returns the symbol `add` with the expression `def add(a, b):
 - VSCode extensions (these should also be installed automatically with Shinkansen, but just to be sure!):
   - [Python](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
   - [Pylance](https://marketplace.visualstudio.com/items?itemName=ms-python.vscode-pylance)
-
+    - Also ensure that this is set as your **default** language server. To do this, search for `Python: Language Server` in the Settings, and ensure that `Pylance` is selected in the drop-down.
 
 Since the extension isn't published on the Marketplace, you'll need to install the `.vsix` file manually. To do this:
 
