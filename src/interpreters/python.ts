@@ -1,15 +1,15 @@
 import { createConnection, Socket } from "net";
-import { InterpreterProvider } from './interpreters';
+import { InterpreterProvider, InterpreterResult } from './interpreters';
 
 export class PythonInterpreterProvider implements InterpreterProvider {
     private port: number;
     private connection?: Socket;
-    public onReceive: (data: string) => void;
+    public onReceive: (data: InterpreterResult) => void;
     public onError: (error: Error) => void;
     public onDisconnect: () => void;
 
     constructor(port: number,
-        onReceive: (data: string) => void,
+        onReceive: (data: InterpreterResult) => void,
         onError: (error: Error) => void,
         onDisconnect: () => void) {
         this.port = port;
@@ -30,7 +30,13 @@ export class PythonInterpreterProvider implements InterpreterProvider {
         });
 
         this.connection.on('data', (d: Buffer) => {
-            this.onReceive(d.toString());
+            const json = JSON.parse(d.toString());
+            this.onReceive({
+                locals: json["locals"],
+                lastExprResult: json["last_expr_result"],
+                lastExprError: json["last_expr_error"],
+                incomplete: json["incomplete"]
+            });
         });
 
         this.connection.on('end', () => {

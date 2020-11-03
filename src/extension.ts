@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { SymbolProvider, Symbol } from './symbols/symbol';
 import { PythonSymbolProvider } from './symbols/python';
-import { InterpreterProvider } from './interpreters/interpreters';
+import { InterpreterProvider, InterpreterResult } from './interpreters/interpreters';
 import { PythonInterpreterProvider } from './interpreters/python';
 
 interface State {
@@ -22,18 +22,15 @@ let state: State = {
     isIncomplete: false
 };
 
-const onInterpreterReceive = (data: string) => {
-    const j = JSON.parse(data);
-    console.log(j);
-
-    state.isIncomplete = j.incomplete;
+const onInterpreterReceive = (data: InterpreterResult) => {
+    state.isIncomplete = data.incomplete;
 
     state.currentEditor?.edit(e => {
         e.insert(
             new vscode.Position(
                 state.currentEditor!.selection.active.line,
                 state.currentEditor!.selection.active.character + 2),
-            `    # => ${j.last_expr_result}`);
+            `    # => ${data.lastExprResult}`);
     });
 };
 
